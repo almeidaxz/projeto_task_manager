@@ -11,12 +11,24 @@ class AddTaskPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void _addTask() {
+      // Lógica para salvar a tarefa editada
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tarefa atualizada com sucesso!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+        ),
+      );
+      Navigator.pop(context);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Nova Tarefa"),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -84,20 +96,23 @@ class AddTaskPage extends StatelessWidget {
                   initialTime: TimeOfDay.now(),
                 );
                 if (pickedTime != null) {
-                  timeController.text = pickedTime.format(context);
+                  // timeController.text = pickedTime.format(context);
                 }
               },
               readOnly: true,
             ),
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Adicionar a lógica para salvar a tarefa
-              },
-              icon: const Icon(Icons.check),
-              label: const Text("Adicionar"),
-              style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0)),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FloatingActionButton.extended(
+                  onPressed: _addTask,
+                  extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+                  icon: const Icon(Icons.add_alarm_rounded),
+                  label: const Text("Adicionar"),
+                ),
+              ],
             ),
           ],
         ),

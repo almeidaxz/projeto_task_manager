@@ -31,13 +31,16 @@ class LoginPage extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const HomePage()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TaskManagerPage()));
               },
               child: const Text('Fazer Login'),
             ),
             TextButton(
               onPressed: () {
+                // ignore: avoid_print
                 print("cadastro");
               },
               child: const Text('Fazer Login com GitHub'),

@@ -10,12 +10,24 @@ class AddReminderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void _addReminder() {
+      // Lógica para salvar a tarefa editada
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tarefa atualizada com sucesso!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+        ),
+      );
+      Navigator.pop(context);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Novo Lembrete"),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -68,17 +80,23 @@ class AddReminderPage extends StatelessWidget {
                   initialTime: TimeOfDay.now(),
                 );
                 if (pickedTime != null) {
+                  // ignore: use_build_context_synchronously
                   timeController.text = pickedTime.format(context);
                 }
               },
               readOnly: true,
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                // Adicionar a lógica para salvar o lembrete
-              },
-              child: const Text("Adicionar"),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FloatingActionButton.extended(
+                  onPressed: _addReminder,
+                  extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+                  icon: const Icon(Icons.add_alarm_rounded),
+                  label: const Text("Adicionar"),
+                ),
+              ],
             ),
           ],
         ),
