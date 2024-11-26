@@ -17,15 +17,15 @@ class AddTaskPage extends StatelessWidget {
   Widget build(BuildContext context) {
     BaseClient client = BaseClient();
     const userId = 1;
-    Future<void> _addTask() async {
+    Future<void> addTask() async {
       // Obtendo os valores dos campos
       final name = nameController.text.trim();
       final description = descriptionController.text.trim();
       final categories = categoryController.text.trim();
-      final due_date = dateController.text.trim();
-      final due_time = timeController.text.trim();
+      final dueDate = dateController.text.trim();
+      final dueTime = timeController.text.trim();
 
-      if (name.isEmpty || due_date.isEmpty || due_time.isEmpty) {
+      if (name.isEmpty || dueDate.isEmpty || dueTime.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Por favor, preencha os campos obrigatórios.'),
@@ -40,11 +40,11 @@ class AddTaskPage extends StatelessWidget {
         "name": name,
         "description": description,
         "categories": categories,
-        "due_date": due_date,
-        "due_time": due_time.split(" ")[0],
+        "due_date": dueDate,
+        "due_time": dueTime.split(" ")[0],
       };
 
-      final response = await client.post('/task', taskData);
+      final response = await client.post('/task', taskData, needToken: true);
       Map<String, dynamic> data = jsonDecode(response);
       if (!data['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -158,7 +158,7 @@ class AddTaskPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FloatingActionButton.extended(
-                  onPressed: _addTask,
+                  onPressed: addTask,
                   extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                   icon: const Icon(Icons.add_alarm_rounded),
                   label: const Text("Adicionar"),

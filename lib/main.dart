@@ -7,9 +7,11 @@ import 'package:task_manager/pages/add_task/add_task.dart';
 import 'package:task_manager/pages/edit_reminder/edit_reminder.dart';
 import 'package:task_manager/pages/edit_task/edit_task.dart';
 import 'package:task_manager/clients/base_client.dart';
+import 'package:task_manager/pages/login/login.dart';
 import 'dart:convert';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: TaskManagerPage(),
+      home: LoginPage(),
     );
   }
 }
@@ -79,12 +81,14 @@ class TaskManagerPage extends StatefulWidget {
 
 class TaskManagerPageState extends State<TaskManagerPage>
     with SingleTickerProviderStateMixin {
+  var token = '';
   BaseClient client = BaseClient();
 
   List<Task> tasks = [];
   List<Reminder> reminders = [];
+
   getLists() async {
-    var response = await client.get('/main').catchError((print));
+    var response = await client.get('/main');
     Map<String, dynamic> data = jsonDecode(response);
     setState(() {
       tasks = data['response']['tasks']

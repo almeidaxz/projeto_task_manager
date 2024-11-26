@@ -14,11 +14,13 @@ class EditTaskPage extends StatefulWidget {
 }
 
 class EditTaskPageState extends State<EditTaskPage> {
-  late TextEditingController _nameController = TextEditingController();
-  late TextEditingController _descriptionController = TextEditingController();
-  late TextEditingController _categoryController = TextEditingController();
-  late TextEditingController _dateController = TextEditingController();
-  late TextEditingController _timeController = TextEditingController();
+  late final TextEditingController _nameController = TextEditingController();
+  late final TextEditingController _descriptionController =
+      TextEditingController();
+  late final TextEditingController _categoryController =
+      TextEditingController();
+  late final TextEditingController _dateController = TextEditingController();
+  late final TextEditingController _timeController = TextEditingController();
 
   @override
   void initState() {
@@ -26,6 +28,7 @@ class EditTaskPageState extends State<EditTaskPage> {
     _getTaskDetails();
   }
 
+  @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
@@ -63,10 +66,10 @@ class EditTaskPageState extends State<EditTaskPage> {
     final name = _nameController.text.trim();
     final description = _descriptionController.text.trim();
     final categories = _categoryController.text.trim();
-    final due_date = _dateController.text.trim();
-    final due_time = _timeController.text.trim();
+    final dueDate = _dateController.text.trim();
+    final dueTime = _timeController.text.trim();
 
-    if (name.isEmpty || due_date.isEmpty || due_time.isEmpty) {
+    if (name.isEmpty || dueDate.isEmpty || dueTime.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, preencha os campos obrigatórios.'),
@@ -81,8 +84,8 @@ class EditTaskPageState extends State<EditTaskPage> {
       "name": name,
       "description": description,
       "categories": categories,
-      "due_date": due_date,
-      "due_time": due_time.split(" ")[0],
+      "due_date": dueDate,
+      "due_time": dueTime.split(" ")[0],
     };
 
     final response = await client.put('/task/${widget.id}', taskData);

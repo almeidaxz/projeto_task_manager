@@ -14,10 +14,11 @@ class EditReminderPage extends StatefulWidget {
 }
 
 class EditReminderPageState extends State<EditReminderPage> {
-  late TextEditingController _nameController = TextEditingController();
-  late TextEditingController _descriptionController = TextEditingController();
-  late TextEditingController _dateController = TextEditingController();
-  late TextEditingController _timeController = TextEditingController();
+  late final TextEditingController _nameController = TextEditingController();
+  late final TextEditingController _descriptionController =
+      TextEditingController();
+  late final TextEditingController _dateController = TextEditingController();
+  late final TextEditingController _timeController = TextEditingController();
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class EditReminderPageState extends State<EditReminderPage> {
     _getReminderDetails();
   }
 
+  @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
@@ -62,10 +64,10 @@ class EditReminderPageState extends State<EditReminderPage> {
   Future<void> _saveReminder() async {
     final name = _nameController.text.trim();
     final description = _descriptionController.text.trim();
-    final due_date = _dateController.text.trim();
-    final due_time = _timeController.text.trim();
+    final dueDate = _dateController.text.trim();
+    final dueTime = _timeController.text.trim();
 
-    if (name.isEmpty || due_date.isEmpty || due_time.isEmpty) {
+    if (name.isEmpty || dueDate.isEmpty || dueTime.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, preencha os campos obrigatórios.'),
@@ -79,8 +81,8 @@ class EditReminderPageState extends State<EditReminderPage> {
       "user_id": userId.toString(),
       "name": name,
       "description": description,
-      "due_date": due_date,
-      "due_time": due_time.split(" ")[0],
+      "due_date": dueDate,
+      "due_time": dueTime.split(" ")[0],
     };
 
     final response = await client.put('/reminder/${widget.id}', reminderData);

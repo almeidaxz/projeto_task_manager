@@ -16,14 +16,14 @@ class AddReminderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     BaseClient client = BaseClient();
     const userId = 1;
-    Future<void> _addReminder() async {
+    Future<void> addReminder() async {
       // Lógica para salvar a tarefa editada
       final name = nameController.text.trim();
       final description = descriptionController.text.trim();
-      final due_date = dateController.text.trim();
-      final due_time = timeController.text.trim();
+      final dueDate = dateController.text.trim();
+      final dueTime = timeController.text.trim();
 
-      if (name.isEmpty || due_date.isEmpty || due_time.isEmpty) {
+      if (name.isEmpty || dueDate.isEmpty || dueTime.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Por favor, preencha os campos obrigatórios.'),
@@ -37,11 +37,12 @@ class AddReminderPage extends StatelessWidget {
         "user_id": userId.toString(),
         "name": name,
         "description": description,
-        "due_date": due_date,
-        "due_time": due_time.split(" ")[0],
+        "due_date": dueDate,
+        "due_time": dueTime.split(" ")[0],
       };
 
-      final response = await client.post('/reminder', reminderData);
+      final response =
+          await client.post('/reminder', reminderData, needToken: true);
       Map<String, dynamic> data = jsonDecode(response);
       if (!data['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,7 +140,7 @@ class AddReminderPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FloatingActionButton.extended(
-                  onPressed: _addReminder,
+                  onPressed: addReminder,
                   extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                   icon: const Icon(Icons.add_alarm_rounded),
                   label: const Text("Adicionar"),

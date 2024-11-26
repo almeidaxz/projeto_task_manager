@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:task_manager/clients/base_client.dart';
 import 'package:task_manager/pages/login/login.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -9,119 +12,161 @@ class SignUpPage extends StatefulWidget {
 }
 
 class SignUpPageState extends State<SignUpPage> {
-  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _confirmaEmailController =
+      TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+  final TextEditingController _confirmaSenhaController =
+      TextEditingController();
+
+  void _registrar() async {
+    BaseClient client = BaseClient();
+
+    final nome = _nomeController.text.trim();
+    final email = _emailController.text.trim();
+    final confirmaEmail = _confirmaEmailController.text.trim();
+    final senha = _senhaController.text.trim();
+    final confirmaSenha = _confirmaSenhaController.text.trim();
+
+    if (email.isEmpty ||
+        senha.isEmpty ||
+        nome.isEmpty ||
+        confirmaEmail.isEmpty ||
+        confirmaSenha.isEmpty) {
+      _mostrarMensagemErro("Preencha todos os campos.");
+      return;
+    }
+    if (email != confirmaEmail) {
+      _mostrarMensagemErro("Os e-mails não coincidem!");
+      return;
+    }
+
+    if (senha != confirmaSenha) {
+      _mostrarMensagemErro("As senhas não coincidem!");
+      return;
+    }
+
+    final response = await client.post('/user/', {
+      "name": nome,
+      "email": email,
+      "password": senha,
+    });
+    Map<String, dynamic> data = jsonDecode(response);
+
+    if (!data['success']) {
+      _mostrarMensagemErro(data['errors'][0]);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cadastro realizado com sucesso!'),
+          backgroundColor: Colors.green,
+          duration: Duration(milliseconds: 800),
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
+  }
+
+  void _mostrarMensagemErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: const Color(0xFFF8F4FF), // Fundo roxo claro
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.book, size: 100, color: Colors.pink[100]),
-                const SizedBox(height: 20),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: "Nome Completo",
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira seu nome completo';
-                    }
-                    return null;
-                  },
+                _buildTextField(
+                  label: "Nome Completo",
+                  hintText: "John Doe",
+                  icon: Icons.person,
+                  controller: _nomeController,
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: "E-mail",
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira seu e-mail';
-                    }
-                    return null;
-                  },
+                const SizedBox(height: 16.0),
+                _buildTextField(
+                  label: "E-mail",
+                  hintText: "seuemail@provedor.com.br",
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailController,
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: "Confirmar E-mail",
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, confirme seu e-mail';
-                    }
-                    return null;
-                  },
+                const SizedBox(height: 16.0),
+                _buildTextField(
+                  label: "Confirmar E-mail",
+                  hintText: "seuemail@provedor.com.br",
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  controller: _confirmaEmailController,
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
+                const SizedBox(height: 16.0),
+                _buildTextField(
+                  label: "Senha",
+                  hintText: "********",
+                  icon: Icons.lock,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Senha",
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira sua senha';
-                    }
-                    return null;
-                  },
+                  controller: _senhaController,
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
+                const SizedBox(height: 16.0),
+                _buildTextField(
+                  label: "Confirmar Senha",
+                  hintText: "********",
+                  icon: Icons.lock,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Confirmar Senha",
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, confirme sua senha';
-                    }
-                    return null;
-                  },
+                  controller: _confirmaSenhaController,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32.0),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Exibe o Snackbar de sucesso
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Conta criada com sucesso!'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-
-                      // Redireciona para a página de login
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text("Registrar"),
+                  onPressed: _registrar,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9C7DF9), // Roxo do botão
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text(
+                    "Registrar",
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
+                const SizedBox(height: 16.0),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
                   },
                   child: const Text(
                     "Já possui conta? Entrar",
-                    style: TextStyle(decoration: TextDecoration.underline),
+                    style: TextStyle(
+                      color: Color(0xFF9C7DF9),
+                      fontSize: 14.0,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
               ],
@@ -129,6 +174,43 @@ class SignUpPageState extends State<SignUpPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hintText,
+    required IconData icon,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            hintText: hintText,
+            prefixIcon: Icon(icon),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }
