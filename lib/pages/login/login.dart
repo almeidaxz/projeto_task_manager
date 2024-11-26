@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/main.dart';
-import 'package:task_manager/signup/signup.dart';
+import 'package:task_manager/pages/signup/signup.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

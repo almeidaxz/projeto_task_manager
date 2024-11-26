@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:task_manager/clients/base_client.dart';
 
 class AddTaskPage extends StatelessWidget {
   final TextEditingController nameController = TextEditingController();
@@ -11,16 +15,55 @@ class AddTaskPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void _addTask() {
-      // Lógica para salvar a tarefa editada
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tarefa atualizada com sucesso!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 1),
-        ),
-      );
-      Navigator.pop(context);
+    BaseClient client = BaseClient();
+    const userId = 1;
+    Future<void> _addTask() async {
+      // Obtendo os valores dos campos
+      final name = nameController.text.trim();
+      final description = descriptionController.text.trim();
+      final categories = categoryController.text.trim();
+      final due_date = dateController.text.trim();
+      final due_time = timeController.text.trim();
+
+      if (name.isEmpty || due_date.isEmpty || due_time.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, preencha os campos obrigatórios.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final taskData = {
+        "user_id": userId.toString(),
+        "name": name,
+        "description": description,
+        "categories": categories,
+        "due_date": due_date,
+        "due_time": due_time.split(" ")[0],
+      };
+
+      final response = await client.post('/task', taskData);
+      Map<String, dynamic> data = jsonDecode(response);
+      if (!data['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['errors'][0]),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 1, milliseconds: 500),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tarefa adicionada com sucesso!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
+        Navigator.pop(context);
+      }
     }
 
     return Scaffold(
@@ -66,7 +109,7 @@ class AddTaskPage extends StatelessWidget {
             TextField(
               controller: dateController,
               decoration: const InputDecoration(
-                labelText: 'Data',
+                labelText: 'Data*',
                 border: OutlineInputBorder(),
               ),
               onTap: () async {
@@ -74,11 +117,11 @@ class AddTaskPage extends StatelessWidget {
                   context: context,
                   initialDate: DateTime.now(),
                   firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
+                  lastDate: DateTime(2030),
                 );
                 if (pickedDate != null) {
                   dateController.text =
-                      "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                      DateFormat('dd/MM/yyyy').format(pickedDate);
                 }
               },
               readOnly: true,
@@ -87,16 +130,24 @@ class AddTaskPage extends StatelessWidget {
             TextField(
               controller: timeController,
               decoration: const InputDecoration(
-                labelText: 'Hora',
+                labelText: 'Hora*',
                 border: OutlineInputBorder(),
               ),
               onTap: () async {
                 TimeOfDay? pickedTime = await showTimePicker(
                   context: context,
                   initialTime: TimeOfDay.now(),
+                  builder: (BuildContext context, Widget? child) {
+                    return MediaQuery(
+                      data: MediaQuery.of(context)
+                          .copyWith(alwaysUse24HourFormat: true),
+                      child: child!,
+                    );
+                  },
                 );
                 if (pickedTime != null) {
-                  // timeController.text = pickedTime.format(context);
+                  timeController.text = DateFormat('HH:mm').format(
+                      DateTime(0, 0, 0, pickedTime.hour, pickedTime.minute));
                 }
               },
               readOnly: true,
