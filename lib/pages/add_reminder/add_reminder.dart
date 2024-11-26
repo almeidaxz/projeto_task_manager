@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/clients/base_client.dart';
 
@@ -15,9 +16,16 @@ class AddReminderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     BaseClient client = BaseClient();
-    const userId = 1;
+    FlutterSecureStorage storage = const FlutterSecureStorage();
+    String? userId = '';
+
+    getStorage() async {
+      userId = await storage.read(key: 'id').then((value) => value);
+    }
+
+    getStorage();
+
     Future<void> addReminder() async {
-      // Lógica para salvar a tarefa editada
       final name = nameController.text.trim();
       final description = descriptionController.text.trim();
       final dueDate = dateController.text.trim();
@@ -34,7 +42,7 @@ class AddReminderPage extends StatelessWidget {
       }
 
       final reminderData = {
-        "user_id": userId.toString(),
+        "user_id": userId,
         "name": name,
         "description": description,
         "due_date": dueDate,
@@ -74,6 +82,7 @@ class AddReminderPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: const Key('addNameReminderField'),
               controller: nameController,
               decoration: const InputDecoration(
                 labelText: 'Nome*',
@@ -82,6 +91,7 @@ class AddReminderPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addDescriptionReminderField'),
               controller: descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Descrição',
@@ -90,6 +100,7 @@ class AddReminderPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addDateReminderField'),
               controller: dateController,
               decoration: const InputDecoration(
                 labelText: 'Data*',
@@ -111,6 +122,7 @@ class AddReminderPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addTimeReminderField'),
               controller: timeController,
               decoration: const InputDecoration(
                 labelText: 'Hora*',
@@ -144,6 +156,7 @@ class AddReminderPage extends StatelessWidget {
                   extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                   icon: const Icon(Icons.add_alarm_rounded),
                   label: const Text("Adicionar"),
+                  heroTag: const Key('addReminderButton'),
                 ),
               ],
             ),

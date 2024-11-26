@@ -6,7 +6,7 @@ import 'package:task_manager/clients/base_client.dart';
 import 'package:task_manager/main.dart';
 import 'package:task_manager/pages/signup/signup.dart';
 
-final storage = const FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,9 +20,9 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _senhaController = TextEditingController();
 
   void _checkToken() async {
-    final token = await storage.read(key: 'token');
+    final token = await storage.read(key: 'token').then((value) => value);
     if (token != null) {
-      var name = await storage.read(key: 'name');
+      var name = await storage.read(key: 'name').then((value) => value);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -56,13 +56,16 @@ class _LoginPageState extends State<LoginPage> {
       _mostrarMensagemErro(data['errors'][0]);
     } else {
       await storage.write(key: 'token', value: data['response']['token']);
-      await storage.write(key: 'name', value: data['response']['name']);
-      await storage.write(key: 'email', value: data['response']['email']);
+      await storage.write(
+          key: 'id', value: data['response']['user']['id'].toString());
+      await storage.write(key: 'name', value: data['response']['user']['name']);
+      await storage.write(
+          key: 'email', value: data['response']['user']['email']);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bem vindo'),
+        SnackBar(
+          content: Text('Bem vindo, ${data['response']['user']['name']}'),
           backgroundColor: Colors.green,
-          duration: Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 500),
         ),
       );
       Navigator.push(

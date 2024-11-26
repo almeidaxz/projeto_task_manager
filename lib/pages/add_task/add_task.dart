@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/clients/base_client.dart';
 
@@ -12,13 +13,18 @@ class AddTaskPage extends StatelessWidget {
   final TextEditingController timeController = TextEditingController();
 
   AddTaskPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     BaseClient client = BaseClient();
-    const userId = 1;
+    FlutterSecureStorage storage = const FlutterSecureStorage();
+    String? userId = '';
+    getStorage() async {
+      userId = await storage.read(key: 'id').then((value) => value);
+    }
+
+    getStorage();
+
     Future<void> addTask() async {
-      // Obtendo os valores dos campos
       final name = nameController.text.trim();
       final description = descriptionController.text.trim();
       final categories = categoryController.text.trim();
@@ -30,13 +36,14 @@ class AddTaskPage extends StatelessWidget {
           const SnackBar(
             content: Text('Por favor, preencha os campos obrigatórios.'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 1),
           ),
         );
         return;
       }
 
       final taskData = {
-        "user_id": userId.toString(),
+        "user_id": userId,
         "name": name,
         "description": description,
         "categories": categories,
@@ -51,7 +58,7 @@ class AddTaskPage extends StatelessWidget {
           SnackBar(
             content: Text(data['errors'][0]),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 1, milliseconds: 500),
+            duration: const Duration(seconds: 1),
           ),
         );
       } else {
@@ -76,6 +83,7 @@ class AddTaskPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: const Key('addNameTaskField'),
               controller: nameController,
               decoration: const InputDecoration(
                 labelText: 'Nome*',
@@ -84,6 +92,7 @@ class AddTaskPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addDescriptionTaskField'),
               controller: descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Descrição',
@@ -92,6 +101,7 @@ class AddTaskPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addCategoryTaskField'),
               controller: categoryController,
               decoration: InputDecoration(
                 labelText: 'Categoria',
@@ -107,6 +117,7 @@ class AddTaskPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addDateTaskField'),
               controller: dateController,
               decoration: const InputDecoration(
                 labelText: 'Data*',
@@ -128,6 +139,7 @@ class AddTaskPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('addTimeTaskField'),
               controller: timeController,
               decoration: const InputDecoration(
                 labelText: 'Hora*',
@@ -162,6 +174,7 @@ class AddTaskPage extends StatelessWidget {
                   extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                   icon: const Icon(Icons.add_alarm_rounded),
                   label: const Text("Adicionar"),
+                  heroTag: const Key('addTaskButton'),
                 ),
               ],
             ),

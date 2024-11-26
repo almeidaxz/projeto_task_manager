@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:task_manager/pages/add_reminder/add_reminder.dart';
 import 'package:task_manager/pages/add_task/add_task.dart';
 import 'package:task_manager/pages/edit_reminder/edit_reminder.dart';
@@ -10,9 +12,14 @@ import 'package:task_manager/clients/base_client.dart';
 import 'package:task_manager/pages/login/login.dart';
 import 'dart:convert';
 
+import 'package:task_manager/theme/theme_provider.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider(
+    create: (context) => ThemeProvider(),
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -20,8 +27,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: LoginPage(),
+    return MaterialApp(
+      theme: Provider.of<ThemeProvider>(context).themeMode,
+      home: const LoginPage(),
     );
   }
 }
@@ -81,59 +89,110 @@ class TaskManagerPage extends StatefulWidget {
 
 class TaskManagerPageState extends State<TaskManagerPage>
     with SingleTickerProviderStateMixin {
-  var token = '';
+  final storage = const FlutterSecureStorage();
   BaseClient client = BaseClient();
 
+  String? userName = '';
+  String? userEmail = '';
+  String? userId = '';
   List<Task> tasks = [];
   List<Reminder> reminders = [];
 
-  getLists() async {
-    var response = await client.get('/main');
-    Map<String, dynamic> data = jsonDecode(response);
-    setState(() {
-      tasks = data['response']['tasks']
-          .map<Task>((task) => Task(
-                user_id: task['user_id'],
-                id: task['id'],
-                name: task['name'],
-                description: task['description'],
-                categories: task['categories'],
-                due_date: task['due_date'],
-                due_time: task['due_time'],
-                is_done: task['is_done'],
-              ))
-          .toList();
-      tasks.sort((Task a, Task b) {
-        return a.is_done ? 1 : -1;
-      });
-
-      reminders = data['response']['reminders']
-          .map<Reminder>((reminder) => Reminder(
-                user_id: reminder['user_id'],
-                id: reminder['id'],
-                name: reminder['name'],
-                description: reminder['description'],
-                due_date: reminder['due_date'],
-                due_time: reminder['due_time'],
-                isOverdue: _formatDate(
-                        "${reminder['due_date']} ${reminder['due_time']}")
-                    .isBefore(DateTime.now()),
-              ))
-          .toList();
-
-      reminders.sort((Reminder a, Reminder b) {
-        return a.isOverdue ? -1 : 1;
-      });
-    });
-  }
-
   late TabController _tabController;
+
+  bool isMenuOpen = false;
+  bool isDarkTheme = false;
 
   @override
   void initState() {
     super.initState();
+    readStorage();
     getLists();
     _tabController = TabController(length: 2, vsync: this);
+  }
+
+  void _logout() async {
+    await storage.delete(key: 'token').then((value) => value);
+    await storage.delete(key: 'name').then((value) => value);
+    await storage.delete(key: 'email').then((value) => value);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
+  readStorage() async {
+    var stgName = await storage.read(key: 'name').then((value) => value);
+    userName = stgName?.split(' ')[0];
+  }
+
+  getLists() async {
+    var response = await client.get('/main');
+    Map<String, dynamic> data = jsonDecode(response);
+    if (data['statusCode'] == 401) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("${data['errors'][0]}"),
+          backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 800),
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    } else {
+      setState(() {
+        tasks = data['response']['tasks']!
+            .map<Task>((task) => Task(
+                  user_id: task['user_id'],
+                  id: task['id'],
+                  name: task['name'],
+                  description: task['description'],
+                  categories: task['categories'],
+                  due_date: task['due_date'],
+                  due_time: task['due_time'],
+                  is_done: task['is_done'],
+                ))
+            .toList();
+        tasks.sort((Task a, Task b) {
+          return a.is_done ? 1 : -1;
+        });
+
+        reminders = data['response']['reminders']!
+            .map<Reminder>((reminder) => Reminder(
+                  user_id: reminder['user_id'],
+                  id: reminder['id'],
+                  name: reminder['name'],
+                  description: reminder['description'],
+                  due_date: reminder['due_date'],
+                  due_time: reminder['due_time'],
+                  isOverdue: _formatDate(
+                          "${reminder['due_date']} ${reminder['due_time']}")
+                      .isBefore(DateTime.now()),
+                ))
+            .toList();
+
+        reminders.sort((Reminder a, Reminder b) {
+          return a.isOverdue ? -1 : 1;
+        });
+      });
+    }
+  }
+
+  void _toggleMenu() {
+    setState(() {
+      isMenuOpen = !isMenuOpen;
+    });
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+      isDarkTheme = !isDarkTheme;
+    });
   }
 
   void _toggleSelection(int index, bool isTaskTab) {
@@ -160,6 +219,14 @@ class TaskManagerPageState extends State<TaskManagerPage>
     };
     var response = await client.put('/task/${task.id}', taskData);
     Map<String, dynamic> data = jsonDecode(response);
+    if (data['statusCode'] == 401) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
     if (!data['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -249,6 +316,14 @@ class TaskManagerPageState extends State<TaskManagerPage>
     var route = isTaskTab ? '/task' : '/reminder';
     var response = await client.delete(route, idsList);
     Map<String, dynamic> data = jsonDecode(response);
+    if (data['statusCode'] == 401) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
     if (!data['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -273,13 +348,27 @@ class TaskManagerPageState extends State<TaskManagerPage>
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          _mainContent(context),
+          _sideMenu(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _mainContent(BuildContext context) {
     int selectedCount = _tabController.index == 0
         ? tasks.where((task) => task.isSelected).length
         : reminders.where((reminder) => reminder.isSelected).length;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Lucas - Tarefas"),
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+        title: Text(
+            "$userName - ${_tabController.index == 0 ? "Tarefas" : "Lembretes"}"),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_alt),
@@ -290,7 +379,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
           IconButton(
             icon: const Icon(Icons.menu),
             onPressed: () {
-              // Implementar configurações
+              _toggleMenu();
             },
           ),
         ],
@@ -326,6 +415,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
                 label: Text(_tabController.index == 0
                     ? 'Nova Tarefa'
                     : 'Novo Lembrete'),
+                heroTag: const Key('addButton'),
               ),
             if (selectedCount == 1)
               FloatingActionButton.extended(
@@ -333,6 +423,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
                 icon: const Icon(Icons.edit),
                 extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                 label: const Text("Editar"),
+                heroTag: const Key('editButton'),
               ),
             if (selectedCount > 0)
               FloatingActionButton.extended(
@@ -364,7 +455,66 @@ class TaskManagerPageState extends State<TaskManagerPage>
                 backgroundColor: Colors.red,
                 icon: const Icon(Icons.delete),
                 label: const Text("Excluir"),
+                heroTag: const Key('deleteButton'),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sideMenu(BuildContext context) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      right: isMenuOpen ? 0 : -280,
+      top: 0,
+      bottom: 0,
+      child: SizedBox(
+        width: 280,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DrawerHeader(
+              padding: const EdgeInsets.only(top: 64),
+              child: ListTile(
+                title: const Text(
+                  'Menu',
+                  style: TextStyle(fontSize: 24),
+                ),
+                onTap: () {
+                  _toggleMenu();
+                },
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                ),
+              ),
+            ),
+            ListTile(
+              title: const Text(
+                'Alterar Tema',
+              ),
+              onTap: () {
+                _toggleTheme();
+              },
+              trailing: Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: isDarkTheme,
+                    onChanged: (value) => _toggleTheme(),
+                  )),
+            ),
+            ListTile(
+              title: const Text(
+                'Logout',
+              ),
+              onTap: () {
+                _logout();
+              },
+              trailing: const Icon(
+                Icons.logout,
+                size: 24,
+              ),
+            ),
           ],
         ),
       ),
@@ -377,21 +527,31 @@ class TaskManagerPageState extends State<TaskManagerPage>
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
+        Color tileColor;
+        if (item.isSelected && !isDarkTheme) {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        } else if (item.isSelected && isDarkTheme) {
+          tileColor = const Color.fromARGB(255, 138, 138, 138);
+        } else if (!item.isSelected && isDarkTheme) {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        } else {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        }
         return ListTile(
-          onTap: () => _toggleSelection(index, isTaskTab),
-          shape: const Border(
-              bottom: BorderSide(color: Color.fromRGBO(212, 212, 212, 1))),
-          title: Text(item.name),
-          subtitle:
-              Text("${item.description}\n${item.due_date} ${item.due_time}"),
-          trailing: Switch(
-            value: item.is_done,
-            onChanged: (value) => _toggleDone(item, index, isTaskTab),
-          ),
-          tileColor: item.isSelected
-              ? const Color.fromRGBO(218, 212, 222, 1)
-              : Colors.white,
-        );
+            onTap: () => _toggleSelection(index, isTaskTab),
+            shape: Border(
+                bottom: BorderSide(
+                    color: isDarkTheme
+                        ? const Color.fromARGB(255, 209, 209, 209)
+                        : const Color.fromARGB(255, 49, 49, 49))),
+            title: Text(item.name),
+            subtitle:
+                Text("${item.description}\n${item.due_date} ${item.due_time}"),
+            trailing: Switch(
+              value: item.is_done,
+              onChanged: (value) => _toggleDone(item, index, isTaskTab),
+            ),
+            tileColor: tileColor);
       },
     );
   }
@@ -402,31 +562,38 @@ class TaskManagerPageState extends State<TaskManagerPage>
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
+        Color tileColor;
+        if (item.isSelected && !isDarkTheme) {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        } else if (item.isSelected && isDarkTheme) {
+          tileColor = const Color.fromARGB(255, 138, 138, 138);
+        } else if (!item.isSelected && isDarkTheme) {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        } else {
+          tileColor = const Color.fromRGBO(212, 212, 212, 1);
+        }
         return Padding(
             padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
             child: (ListTile(
-              shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16))),
-              onTap: () => _toggleSelection(index, isTaskTab),
-              leading: _formatDate("${item.due_date} ${item.due_time}")
-                      .isBefore(DateTime.now())
-                  ? const Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.red,
-                      size: 32,
-                    )
-                  : const Icon(
-                      Icons.tag_faces_sharp,
-                      color: Colors.green,
-                      size: 32,
-                    ),
-              title: Center(child: Text(item.name)),
-              subtitle: Center(child: Text(item.description)),
-              trailing: Text("${item.due_date} ${item.due_time}"),
-              tileColor: item.isSelected
-                  ? const Color.fromRGBO(218, 212, 222, 1)
-                  : const Color.fromRGBO(166, 166, 166, .1),
-            )));
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16))),
+                onTap: () => _toggleSelection(index, isTaskTab),
+                leading: _formatDate("${item.due_date} ${item.due_time}")
+                        .isBefore(DateTime.now())
+                    ? const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                        size: 32,
+                      )
+                    : const Icon(
+                        Icons.tag_faces_sharp,
+                        color: Colors.green,
+                        size: 32,
+                      ),
+                title: Center(child: Text(item.name)),
+                subtitle: Center(child: Text(item.description)),
+                trailing: Text("${item.due_date} ${item.due_time}"),
+                tileColor: tileColor)));
       },
     );
   }

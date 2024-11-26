@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/clients/base_client.dart';
 
@@ -14,15 +15,23 @@ class EditReminderPage extends StatefulWidget {
 }
 
 class EditReminderPageState extends State<EditReminderPage> {
+  BaseClient client = BaseClient();
   late final TextEditingController _nameController = TextEditingController();
   late final TextEditingController _descriptionController =
       TextEditingController();
   late final TextEditingController _dateController = TextEditingController();
   late final TextEditingController _timeController = TextEditingController();
 
+  FlutterSecureStorage storage = const FlutterSecureStorage();
+  String? userId = '';
+  getStorage() async {
+    userId = await storage.read(key: 'id').then((value) => value);
+  }
+
   @override
   void initState() {
     super.initState();
+    getStorage();
     _getReminderDetails();
   }
 
@@ -57,9 +66,6 @@ class EditReminderPageState extends State<EditReminderPage> {
       _timeController.text = data['response']['due_time'];
     }
   }
-
-  BaseClient client = BaseClient();
-  static const userId = 1;
 
   Future<void> _saveReminder() async {
     final name = _nameController.text.trim();
@@ -119,6 +125,7 @@ class EditReminderPageState extends State<EditReminderPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: const Key('editNameReminderField'),
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Nome*',
@@ -127,6 +134,7 @@ class EditReminderPageState extends State<EditReminderPage> {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('editDescriptionReminderField'),
               controller: _descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Descrição',
@@ -135,6 +143,7 @@ class EditReminderPageState extends State<EditReminderPage> {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('editDateReminderField'),
               controller: _dateController,
               decoration: const InputDecoration(
                 labelText: 'Data*',
@@ -156,6 +165,7 @@ class EditReminderPageState extends State<EditReminderPage> {
             ),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('editTimeReminderField'),
               controller: _timeController,
               decoration: const InputDecoration(
                 labelText: 'Hora*',
@@ -190,6 +200,7 @@ class EditReminderPageState extends State<EditReminderPage> {
                   extendedPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
                   icon: const Icon(Icons.check),
                   label: const Text("Salvar"),
+                  heroTag: const Key('saveReminderButton'),
                 ),
               ],
             ),
