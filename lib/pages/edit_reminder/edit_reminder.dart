@@ -55,7 +55,7 @@ class EditReminderPageState extends State<EditReminderPage> {
           content: Text(
               'Não foi possível buscar os dados da tarefa. Tente novamente mais tarde.'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
+          duration: Duration(seconds: 1),
         ),
       );
       Navigator.pop(context);
@@ -78,6 +78,7 @@ class EditReminderPageState extends State<EditReminderPage> {
         const SnackBar(
           content: Text('Por favor, preencha os campos obrigatórios.'),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 1),
         ),
       );
       return;
@@ -156,10 +157,8 @@ class EditReminderPageState extends State<EditReminderPage> {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2030),
                 );
-                if (pickedDate != null) {
-                  _dateController.text =
-                      DateFormat('dd/MM/yyyy').format(pickedDate);
-                }
+                _dateController.text =
+                    DateFormat('dd/MM/yyyy').format(pickedDate!);
               },
               readOnly: true,
             ),

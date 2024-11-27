@@ -23,19 +23,19 @@ class _LoginPageState extends State<LoginPage> {
     final token = await storage.read(key: 'token').then((value) => value);
     if (token != null) {
       var name = await storage.read(key: 'name').then((value) => value);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TaskManagerPage(),
-        ),
-      );
       Future.delayed(
-          const Duration(seconds: 1),
-          () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Bem vindo, $name'),
-                backgroundColor: Colors.green,
-                duration: const Duration(milliseconds: 800),
-              )));
+          const Duration(milliseconds: 500),
+          () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TaskManagerPage(),
+                ),
+              ));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Bem vindo, $name'),
+        backgroundColor: Colors.green,
+        duration: const Duration(milliseconds: 600),
+      ));
     }
   }
 

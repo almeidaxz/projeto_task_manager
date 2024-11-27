@@ -2,17 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:task_manager/models/reminder/reminder.dart';
+import 'package:task_manager/models/task/task.dart';
 import 'package:task_manager/pages/add_reminder/add_reminder.dart';
 import 'package:task_manager/pages/add_task/add_task.dart';
+import 'package:task_manager/pages/edit_profile/edit_profile.dart';
 import 'package:task_manager/pages/edit_reminder/edit_reminder.dart';
 import 'package:task_manager/pages/edit_task/edit_task.dart';
 import 'package:task_manager/clients/base_client.dart';
 import 'package:task_manager/pages/login/login.dart';
+import 'package:task_manager/utils/format_date.dart';
 import 'dart:convert';
 
 import 'package:task_manager/theme/theme_provider.dart';
+import 'package:task_manager/widgets/main/reminder_list.dart';
+import 'package:task_manager/widgets/main/task_list.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,52 +39,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Task {
-  final int user_id;
-  final int id;
-  final String name;
-  final String description;
-  final String categories;
-  final String due_date;
-  final String due_time;
-  bool is_done;
-  bool isSelected;
-
-  Task({
-    required this.user_id,
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.categories,
-    required this.due_date,
-    required this.due_time,
-    required this.is_done,
-    this.isSelected = false,
-  });
-}
-
-class Reminder {
-  final int user_id;
-  final int id;
-  final String name;
-  final String description;
-  final String due_date;
-  final String due_time;
-  bool isOverdue = false;
-  bool isSelected;
-
-  Reminder({
-    required this.user_id,
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.due_date,
-    required this.due_time,
-    this.isSelected = false,
-    this.isOverdue = false,
-  });
-}
-
 class TaskManagerPage extends StatefulWidget {
   const TaskManagerPage({super.key});
 
@@ -97,8 +56,11 @@ class TaskManagerPageState extends State<TaskManagerPage>
   String? userId = '';
   List<Task> tasks = [];
   List<Reminder> reminders = [];
+  List<Task> originalTasks = [];
+  List<Reminder> originalReminders = [];
 
   late TabController _tabController;
+  late final TextEditingController _filterController = TextEditingController();
 
   bool isMenuOpen = false;
   bool isDarkTheme = false;
@@ -109,21 +71,6 @@ class TaskManagerPageState extends State<TaskManagerPage>
     readStorage();
     getLists();
     _tabController = TabController(length: 2, vsync: this);
-  }
-
-  void _logout() async {
-    await storage.delete(key: 'token').then((value) => value);
-    await storage.delete(key: 'name').then((value) => value);
-    await storage.delete(key: 'email').then((value) => value);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-  }
-
-  readStorage() async {
-    var stgName = await storage.read(key: 'name').then((value) => value);
-    userName = stgName?.split(' ')[0];
   }
 
   getLists() async {
@@ -160,6 +107,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
         tasks.sort((Task a, Task b) {
           return a.is_done ? 1 : -1;
         });
+        originalTasks = tasks;
 
         reminders = data['response']['reminders']!
             .map<Reminder>((reminder) => Reminder(
@@ -169,7 +117,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
                   description: reminder['description'],
                   due_date: reminder['due_date'],
                   due_time: reminder['due_time'],
-                  isOverdue: _formatDate(
+                  isOverdue: formatDate(
                           "${reminder['due_date']} ${reminder['due_time']}")
                       .isBefore(DateTime.now()),
                 ))
@@ -178,6 +126,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
         reminders.sort((Reminder a, Reminder b) {
           return a.isOverdue ? -1 : 1;
         });
+        originalReminders = reminders;
       });
     }
   }
@@ -244,6 +193,58 @@ class TaskManagerPageState extends State<TaskManagerPage>
         () => setState(() {
               getLists();
             }));
+  }
+
+  readStorage() async {
+    var stgName = await storage.read(key: 'name').then((value) => value);
+    userName = stgName?.split(' ')[0];
+  }
+
+  void _filtrarListas(isTaskTab) {
+    setState(() {
+      if (isTaskTab && _filterController.text.isEmpty) {
+        tasks = originalTasks;
+      } else if (isTaskTab && _filterController.text.isNotEmpty) {
+        tasks = originalTasks
+            .where((task) =>
+                task.name.contains(_filterController.text) ||
+                task.description.contains(_filterController.text))
+            .toList();
+      } else if (!isTaskTab && _filterController.text.isEmpty) {
+        reminders = originalReminders;
+      } else {
+        reminders = originalReminders
+            .where((reminder) =>
+                reminder.name.contains(_filterController.text) ||
+                reminder.description.contains(_filterController.text))
+            .toList();
+      }
+    });
+    _filterController.text = '';
+    Navigator.pop(context);
+  }
+
+  void _logout() async {
+    await storage.delete(key: 'token').then((value) => value);
+    await storage.delete(key: 'name').then((value) => value);
+    await storage.delete(key: 'email').then((value) => value);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
+  void _editProfile() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const EditProfilePage(),
+      ),
+    ).then((_) {
+      setState(() {
+        readStorage();
+      });
+    });
   }
 
   void _add(bool isTaskTab) {
@@ -341,19 +342,11 @@ class TaskManagerPageState extends State<TaskManagerPage>
     );
   }
 
-  DateTime _formatDate(String date) {
-    DateFormat dateFormat = DateFormat("dd/MM/yyyy HH:mm");
-    return dateFormat.parse(date);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        children: [
-          _mainContent(context),
-          _sideMenu(context),
-        ],
+        children: [_mainContent(context), _sideMenu(context)],
       ),
     );
   }
@@ -373,7 +366,42 @@ class TaskManagerPageState extends State<TaskManagerPage>
           IconButton(
             icon: const Icon(Icons.filter_alt),
             onPressed: () {
-              // Implementar filtro
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return SimpleDialog(
+                      title: const Text("Filtros"),
+                      contentPadding: const EdgeInsets.all(24),
+                      children: [
+                        const Text(
+                          'Filtrar por nome ou descrição:',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: TextField(
+                              controller: _filterController,
+                              style: const TextStyle(
+                                height: 1.0,
+                              ),
+                              decoration: InputDecoration(
+                                border: const OutlineInputBorder(),
+                                label: Text(
+                                    'Nome ou descrição ${_tabController.index == 0 ? "da tarefa" : "do lembrete"}'),
+                              ),
+                            )),
+                        FloatingActionButton.extended(
+                          onPressed: () =>
+                              _filtrarListas(_tabController.index == 0),
+                          icon: const Icon(Icons.search_rounded),
+                          extendedPadding:
+                              const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                          label: const Text("Filtrar"),
+                          heroTag: const Key('filtrarButton'),
+                        ),
+                      ]);
+                },
+              );
             },
           ),
           IconButton(
@@ -398,8 +426,18 @@ class TaskManagerPageState extends State<TaskManagerPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildTaskList(tasks, isTaskTab: true),
-          _buildRemindersList(reminders, isTaskTab: false),
+          TaskList(
+              tasks: tasks,
+              onToggleSelection: _toggleSelection,
+              onToggleDone: _toggleDone,
+              isDarkTheme: isDarkTheme,
+              isTaskTab: _tabController.index == 0),
+          RemindersList(
+            reminders: reminders,
+            isTaskTab: _tabController.index == 0,
+            onTap: _toggleSelection,
+            isDarkTheme: isDarkTheme,
+          ),
         ],
       ),
       bottomNavigationBar: Padding(
@@ -464,13 +502,18 @@ class TaskManagerPageState extends State<TaskManagerPage>
   }
 
   Widget _sideMenu(BuildContext context) {
+    Color bgColor = !isDarkTheme
+        ? const Color.fromARGB(255, 255, 241, 253)
+        : const Color.fromARGB(255, 49, 49, 49);
+
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
       right: isMenuOpen ? 0 : -280,
       top: 0,
       bottom: 0,
-      child: SizedBox(
+      child: Container(
         width: 280,
+        color: bgColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -491,17 +534,28 @@ class TaskManagerPageState extends State<TaskManagerPage>
             ),
             ListTile(
               title: const Text(
+                'Perfil',
+              ),
+              onTap: () {
+                _editProfile();
+              },
+              leading: const Icon(Icons.account_circle_outlined,
+                  size: 28, color: Colors.purpleAccent),
+            ),
+            ListTile(
+              leading: Icon(
+                isDarkTheme
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+                size: 26,
+                color: isDarkTheme ? Colors.yellow : Colors.purple,
+              ),
+              title: const Text(
                 'Alterar Tema',
               ),
               onTap: () {
                 _toggleTheme();
               },
-              trailing: Transform.scale(
-                  scale: 0.8,
-                  child: Switch(
-                    value: isDarkTheme,
-                    onChanged: (value) => _toggleTheme(),
-                  )),
             ),
             ListTile(
               title: const Text(
@@ -510,91 +564,15 @@ class TaskManagerPageState extends State<TaskManagerPage>
               onTap: () {
                 _logout();
               },
-              trailing: const Icon(
+              leading: const Icon(
                 Icons.logout,
                 size: 24,
+                color: Colors.redAccent,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTaskList(List<Task> items, {required bool isTaskTab}) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        Color tileColor;
-        if (item.isSelected && !isDarkTheme) {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        } else if (item.isSelected && isDarkTheme) {
-          tileColor = const Color.fromARGB(255, 138, 138, 138);
-        } else if (!item.isSelected && isDarkTheme) {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        } else {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        }
-        return ListTile(
-            onTap: () => _toggleSelection(index, isTaskTab),
-            shape: Border(
-                bottom: BorderSide(
-                    color: isDarkTheme
-                        ? const Color.fromARGB(255, 209, 209, 209)
-                        : const Color.fromARGB(255, 49, 49, 49))),
-            title: Text(item.name),
-            subtitle:
-                Text("${item.description}\n${item.due_date} ${item.due_time}"),
-            trailing: Switch(
-              value: item.is_done,
-              onChanged: (value) => _toggleDone(item, index, isTaskTab),
-            ),
-            tileColor: tileColor);
-      },
-    );
-  }
-
-  Widget _buildRemindersList(List<Reminder> items, {required bool isTaskTab}) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        Color tileColor;
-        if (item.isSelected && !isDarkTheme) {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        } else if (item.isSelected && isDarkTheme) {
-          tileColor = const Color.fromARGB(255, 138, 138, 138);
-        } else if (!item.isSelected && isDarkTheme) {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        } else {
-          tileColor = const Color.fromRGBO(212, 212, 212, 1);
-        }
-        return Padding(
-            padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
-            child: (ListTile(
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(16))),
-                onTap: () => _toggleSelection(index, isTaskTab),
-                leading: _formatDate("${item.due_date} ${item.due_time}")
-                        .isBefore(DateTime.now())
-                    ? const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.red,
-                        size: 32,
-                      )
-                    : const Icon(
-                        Icons.tag_faces_sharp,
-                        color: Colors.green,
-                        size: 32,
-                      ),
-                title: Center(child: Text(item.name)),
-                subtitle: Center(child: Text(item.description)),
-                trailing: Text("${item.due_date} ${item.due_time}"),
-                tileColor: tileColor)));
-      },
     );
   }
 }

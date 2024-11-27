@@ -175,10 +175,8 @@ class EditTaskPageState extends State<EditTaskPage> {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2030),
                 );
-                if (pickedDate != null) {
-                  _dateController.text =
-                      DateFormat('dd/MM/yyyy').format(pickedDate);
-                }
+                _dateController.text =
+                    DateFormat('dd/MM/yyyy').format(pickedDate!);
               },
               readOnly: true,
             ),

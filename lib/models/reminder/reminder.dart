@@ -1,38 +1,21 @@
 class Reminder {
-  int id;
-  String title;
-  String description;
-  DateTime dueDate;
-  DateTime dueTime;
-  bool isDone;
+  final int user_id;
+  final int id;
+  final String name;
+  final String description;
+  final String due_date;
+  final String due_time;
+  bool isOverdue;
+  bool isSelected;
 
   Reminder({
+    required this.user_id,
     required this.id,
-    required this.title,
+    required this.name,
     required this.description,
-    required this.dueDate,
-    required this.dueTime,
-    required this.isDone,
+    required this.due_date,
+    required this.due_time,
+    this.isOverdue = false,
+    this.isSelected = false,
   });
-
-  factory Reminder.fromJson(Map<String, dynamic> json) {
-    return Reminder(
-        id: json['id'],
-        title: json['title'],
-        description: json['description'],
-        dueDate: json['due_date'],
-        dueTime: json['due_time'],
-        isDone: json['is_done']);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'due_date': dueDate,
-      'due_time': dueTime,
-      'is_done': isDone,
-    };
-  }
 }

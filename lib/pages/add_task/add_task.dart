@@ -130,11 +130,9 @@ class AddTaskPage extends StatelessWidget {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2030),
                 );
-                if (pickedDate != null) {
-                  dateController.text =
-                      DateFormat('dd/MM/yyyy').format(pickedDate);
-                }
-              },
+                dateController.text =
+                    DateFormat('dd/MM/yyyy').format(pickedDate!);
+                            },
               readOnly: true,
             ),
             const SizedBox(height: 16),

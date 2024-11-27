@@ -1,42 +1,23 @@
 class Task {
-  int id;
-  String title;
-  String description;
-  String categories;
-  DateTime dueDate;
-  DateTime dueTime;
-  bool isDone;
+  final int user_id;
+  final int id;
+  final String name;
+  final String description;
+  final String categories;
+  final String due_date;
+  final String due_time;
+  bool is_done;
+  bool isSelected;
 
   Task({
+    required this.user_id,
     required this.id,
-    required this.title,
+    required this.name,
     required this.description,
     required this.categories,
-    required this.dueDate,
-    required this.dueTime,
-    required this.isDone,
+    required this.due_date,
+    required this.due_time,
+    this.is_done = false,
+    this.isSelected = false,
   });
-
-  factory Task.fromJson(Map<String, dynamic> json) {
-    return Task(
-        id: json['id'],
-        title: json['title'],
-        description: json['description'],
-        categories: json['categories'],
-        dueDate: json['due_date'],
-        dueTime: json['due_time'],
-        isDone: json['is_done']);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'categories': categories,
-      'due_date': dueDate,
-      'due_time': dueTime,
-      'is_done': isDone,
-    };
-  }
 }
