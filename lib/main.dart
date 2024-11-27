@@ -129,17 +129,19 @@ class TaskManagerPageState extends State<TaskManagerPage>
             .toList();
 
         reminders.sort((Reminder a, Reminder b) {
-          var overdueTime = DateTime.now()
-              .difference(formatDate("${a.due_date} ${a.due_time}"))
-              .inHours;
-
-          if (overdueTime >= 0 && overdueTime < 24) {
-            dueDateIsToday.add(a);
-          }
           return a.isOverdue ? -1 : 1;
         });
         originalReminders = reminders;
       });
+    }
+
+    for (Reminder reminder in reminders) {
+      var overdueTime = formatDate("${reminder.due_date} ${reminder.due_time}")
+          .difference(DateTime.now())
+          .inHours;
+      if (overdueTime >= 0 && overdueTime < 24) {
+        dueDateIsToday.add(reminder);
+      }
     }
 
     if (dueDateIsToday.isNotEmpty) {
@@ -224,7 +226,8 @@ class TaskManagerPageState extends State<TaskManagerPage>
         tasks = originalTasks
             .where((task) =>
                 task.name.contains(_filterController.text) ||
-                task.description.contains(_filterController.text))
+                task.description.contains(_filterController.text) ||
+                task.categories.contains(_filterController.text))
             .toList();
       } else if (!isTaskTab && _filterController.text.isEmpty) {
         reminders = originalReminders;
@@ -389,9 +392,11 @@ class TaskManagerPageState extends State<TaskManagerPage>
                       title: const Text("Filtros"),
                       contentPadding: const EdgeInsets.all(24),
                       children: [
-                        const Text(
-                          'Filtrar por nome ou descrição:',
-                          style: TextStyle(fontSize: 16),
+                        Text(
+                          _tabController.index == 0
+                              ? 'Filtrar por nome, descrição ou categoria:'
+                              : 'Filtrar por nome ou descrição:',
+                          style: const TextStyle(fontSize: 16),
                         ),
                         Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -402,8 +407,9 @@ class TaskManagerPageState extends State<TaskManagerPage>
                               ),
                               decoration: InputDecoration(
                                 border: const OutlineInputBorder(),
-                                label: Text(
-                                    'Nome ou descrição ${_tabController.index == 0 ? "da tarefa" : "do lembrete"}'),
+                                label: Text(_tabController.index == 0
+                                    ? 'Nome, descrição ou categoria da tarefa'
+                                    : 'Nome ou descrição do lembrete'),
                               ),
                             )),
                         FloatingActionButton.extended(
