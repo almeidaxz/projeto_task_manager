@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:task_manager/models/reminder/reminder.dart';
@@ -18,13 +19,15 @@ import 'dart:convert';
 import 'package:task_manager/theme/theme_provider.dart';
 import 'package:task_manager/widgets/main/reminder_list.dart';
 import 'package:task_manager/widgets/main/task_list.dart';
+import 'package:task_manager/widgets/notify.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(ChangeNotifierProvider(
-    create: (context) => ThemeProvider(),
-    child: const MyApp(),
-  ));
+      create: (context) => ThemeProvider(), child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -58,6 +61,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
   List<Reminder> reminders = [];
   List<Task> originalTasks = [];
   List<Reminder> originalReminders = [];
+  List<Reminder> dueDateIsToday = [];
 
   late TabController _tabController;
   late final TextEditingController _filterController = TextEditingController();
@@ -71,6 +75,7 @@ class TaskManagerPageState extends State<TaskManagerPage>
     readStorage();
     getLists();
     _tabController = TabController(length: 2, vsync: this);
+    Notify.initialize(flutterLocalNotificationsPlugin, _tabController);
   }
 
   getLists() async {
@@ -124,10 +129,21 @@ class TaskManagerPageState extends State<TaskManagerPage>
             .toList();
 
         reminders.sort((Reminder a, Reminder b) {
+          var overdueTime = DateTime.now()
+              .difference(formatDate("${a.due_date} ${a.due_time}"))
+              .inHours;
+
+          if (overdueTime >= 0 && overdueTime < 24) {
+            dueDateIsToday.add(a);
+          }
           return a.isOverdue ? -1 : 1;
         });
         originalReminders = reminders;
       });
+    }
+
+    if (dueDateIsToday.isNotEmpty) {
+      Notify.showNotification(flutterLocalNotificationsPlugin);
     }
   }
 

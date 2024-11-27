@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:task_manager/clients/base_client.dart';
 import 'package:task_manager/main.dart';
 import 'package:task_manager/pages/signup/signup.dart';
@@ -18,6 +20,23 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
+
+  void _readPermissions() async {
+    var status = await Permission.notification.status;
+    if (status.isDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text("Para uma melhor experiencia, habilite as notificações."),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 1, milliseconds: 500),
+        ),
+      );
+      Timer(const Duration(seconds: 1, milliseconds: 500), () async {
+        await Permission.notification.request();
+      });
+    }
+  }
 
   void _checkToken() async {
     final token = await storage.read(key: 'token').then((value) => value);
@@ -91,6 +110,7 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _checkToken();
+    _readPermissions();
   }
 
   @override
