@@ -31,7 +31,16 @@ class TaskList extends StatelessWidget {
                 ? const Color.fromARGB(255, 44, 44, 44)
                 : const Color.fromARGB(255, 224, 224, 224));
         return ListTile(
-          title: Text(task.name),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(task.name),
+              Text(
+                task.categories,
+                style: const TextStyle(fontSize: 11),
+              )
+            ],
+          ),
           subtitle:
               Text("${task.description}\n${task.due_date} ${task.due_time}"),
           trailing: Switch(
