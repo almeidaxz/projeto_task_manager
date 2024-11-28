@@ -32,7 +32,7 @@ class EditProfileState extends State<EditProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text(
           'Caso não deseje alterar Nome ou E-mail, mantenha os valores originais. Caso não deseje alterar Senha, deixe em branco.'),
-      backgroundColor: Colors.green,
+      backgroundColor: Colors.blue,
       duration: Duration(seconds: 3),
     ));
   }

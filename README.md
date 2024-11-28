@@ -1,11 +1,10 @@
 # Aplicação de Gerenciamento de Tarefas e Lembretes
 
-##### Integrantes:
-Lucas Almeida Braz - Universidade Salvador - RA 1272322938
-##### Baixar Apk:
-[Link de download do apk](https://drive.google.com/file/d/1oWdiPEsLrufKO_G4_NRRvYsLkCYx_kNa/view?usp=drive_link)
-##### Vídeo Demo:
-[Link do vídeo demonstrativo]()
+##### Entregas Obrigatórias:
+- Lucas Almeida Braz - Universidade Salvador - RA 1272322938
+- [Link de download do apk](https://drive.google.com/file/d/1oWdiPEsLrufKO_G4_NRRvYsLkCYx_kNa/view?usp=drive_link)
+- [Link do vídeo demonstrativo]()
+- [Link do documento PDF]()
 
 ### Descrição
 Essa aplicação é um sistema de gerenciamento de tarefas e lembretes desenvolvido em Flutter. Ela permite que os usuários criem, editem e gerenciem suas tarefas e lembretes de forma eficiente.
