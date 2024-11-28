@@ -1,10 +1,13 @@
-# Aplicação de Gerenciamento de Tarefas e Lembretes
+# Task Manager
+## Aplicação de Gerenciamento de Tarefas e Lembretes
 
 ##### Entregas Obrigatórias:
 - Lucas Almeida Braz - Universidade Salvador - RA 1272322938
 - [Link de download do apk](https://drive.google.com/file/d/1oWdiPEsLrufKO_G4_NRRvYsLkCYx_kNa/view?usp=drive_link)
-- [Link do vídeo demonstrativo]()
-- [Link do documento PDF]()
+- [Link do vídeo demonstrativo](https://youtu.be/nxw_Vt6CPDM)
+- [Link do documento em PDF](https://drive.google.com/file/d/1gD-2QIGYLEcW1KyR6ApSB1ej3Jyw4T0e/view?usp=sharing)
+- [Link do documento em docx](https://docs.google.com/document/d/1X4Bcq-XpNQnfz7zREWA6vjwsVYuo2beWnv8KlAkY7-0/edit?usp=sharing)
+- [Link do design inicial no Figma](https://www.figma.com/design/5LaVl7UJpDDU4agLl0VCKM/Prot%C3%B3tipo-Usabilidade?node-id=0-1&node-type=canvas&t=0vLyIHfwPuzrcEhI-0)
 
 ### Descrição
 Essa aplicação é um sistema de gerenciamento de tarefas e lembretes desenvolvido em Flutter. Ela permite que os usuários criem, editem e gerenciem suas tarefas e lembretes de forma eficiente.
